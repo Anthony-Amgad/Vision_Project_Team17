@@ -5,10 +5,11 @@ cd to CVenv/bin
 
 numpy
 opencv-python
-python-socketio
+python-socketio==4.6.1
 eventlet
 Pillow
 Flask
 matplotlib
 scipy
 imageio
+python-engineio==3.13.2

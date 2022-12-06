@@ -29,7 +29,7 @@ app = Flask(__name__)
 # Read in ground truth map and create 3-channel green version for overplotting
 # NOTE: images are read in by default with the origin (0, 0) in the upper left
 # and y-axis increasing downward.
-ground_truth = mpimg.imread('../calibration_images/map_bw.png')
+ground_truth = mpimg.imread('./calibration_images/map_bw.png')
 # This next line creates arrays of zeros in the red and blue channels
 # and puts the map into the green channel.  This is why the underlying 
 # map output looks green in the display image
@@ -61,7 +61,7 @@ class RoverState():
         # get creative in adding new fields or modifying these!
         self.stop_forward = 50 # Threshold to initiate stopping
         self.go_forward = 500 # Threshold to go forward again
-        self.max_vel = 2 # Maximum velocity (meters/second)
+        self.max_vel = 1 # Maximum velocity (meters/second)
         # Image output from perception step
         # Update this image to display your intermediate analysis steps
         # on screen in autonomous mode
