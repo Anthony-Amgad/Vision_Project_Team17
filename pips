@@ -1,0 +1,12 @@
+We Use Python 3.10.8:
+source ../CVenv/bin/activate
+cd to CVenv/bin
+./python pip install {{package}}
+
+numpy
+opencv-python
+python-socketio
+eventlet
+Pillow
+Flask
+matplotlib
