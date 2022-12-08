@@ -1,5 +1,8 @@
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
+import io
+from PIL import Image
 
 # Identify pixels above the threshold
 # Threshold of RGB > 160 does a nice job of identifying ground pixels only
@@ -178,5 +181,32 @@ def perception_step(Rover):
     
     Rover.nav_dists = dist
     Rover.nav_angles = angles
+
+    # 9) Debugging Mode
+    ######## SET TO TRUE IF YOU WANT DEBUGGING MODE ACTIVE
+
+    dbugmode = False
+
+    if dbugmode:
+        arrow_length = 100
+        mean_dir = np.mean(angles)
+        x_arrow = arrow_length * np.cos(mean_dir)
+        y_arrow = arrow_length * np.sin(mean_dir)
+        try:
+            cv2.imshow('Original Image', image)
+            cv2.imshow('Warped Image', warped)
+            cv2.imshow('Threshholded Image', threshed*255)
+            pimg = np.zeros((321,161,3), np.uint8)+255
+            xpi = np.int_(xp)
+            ypi = np.int_(yp)
+            for i in range(len(xpi)):
+                pimg = cv2.circle(pimg, (xpi[i],ypi[i]+160), radius=0, color=(255,0,0), thickness=1)
+            pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(0,0,255), thickness=5)
+            cv2.imshow("Polar Image", pimg)
+            cv2.waitKey(1)
+        except:
+            print("no blues")
+        
+        
     
     return Rover
