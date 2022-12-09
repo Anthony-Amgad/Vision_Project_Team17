@@ -1,6 +1,5 @@
-import cv2 # OpenCV for perspective transform
+import cv2
 import numpy as np
-import glob  # For reading in a list of images from a folder
 import csv
 import matplotlib.image as mpimg
 
@@ -150,8 +149,8 @@ with open(csvpath, 'r') as file:
 
     # 4) Update Rover.vision_image (this will be displayed on left side of screen)
 
-    vision_image[:,:,2] = color_thresh(image)*255
-    vision_image[:,:,0] = obst_thresh(image)*255
+    vision_image[:,:,0] = color_thresh(image)*255
+    vision_image[:,:,2] = obst_thresh(image)*255
     vision_image[:,:,1] = rock_thresh(image)*255
 
     # 5) Convert map image pixel values to rover-centric coords
