@@ -130,11 +130,14 @@ def perception_step(Rover):
     # 2) Apply perspective transform
 
     warped = perspect_transform(image, source, destination)
+    
+    mask = np.ones_like(image[:,:,0], np.uint8)
+    mask = perspect_transform(mask, source, destination)
 
     # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
 
     threshed = color_thresh(warped)
-    obstic = obst_thresh(warped)
+    obstic = cv2.bitwise_and(obst_thresh(warped), mask)
     rocks = rock_thresh(warped)
 
     # 4) Update Rover.vision_image (this will be displayed on left side of screen)
@@ -185,7 +188,7 @@ def perception_step(Rover):
     # 9) Debugging Mode
     ######## SET TO TRUE IF YOU WANT DEBUGGING MODE ACTIVE
 
-    dbugmode = False
+    dbugmode = True
 
     if dbugmode:
         arrow_length = 100
@@ -195,13 +198,23 @@ def perception_step(Rover):
         try:
             cv2.imshow('Original Image', image)
             cv2.imshow('Warped Image', warped)
-            cv2.imshow('Threshholded Image', threshed*255)
-            pimg = np.zeros((321,161,3), np.uint8)+255
+            cv2.imshow('Navigatabile Warped Terrain Image', threshed*255)
+            cv2.imshow('Obstical Warpeed Terrain Image', obstic*255)
+            cv2.imshow('Rock Warped Terrain Image', rocks*255)
+            pimg = np.zeros((321,161,3), np.uint8)
+            oxpi = np.int_(oxp)
+            oypi = np.int_(oyp)
+            for i in range(len(oxpi)):
+                pimg = cv2.circle(pimg, (oxpi[i],oypi[i]+160), radius=0, color=(0,0,255), thickness=1)
+            rxpi = np.int_(rxp)
+            rypi = np.int_(ryp)
+            for i in range(len(rxpi)):
+                pimg = cv2.circle(pimg, (rxpi[i],rypi[i]+160), radius=0, color=(0,255,0), thickness=1)
             xpi = np.int_(xp)
             ypi = np.int_(yp)
             for i in range(len(xpi)):
                 pimg = cv2.circle(pimg, (xpi[i],ypi[i]+160), radius=0, color=(255,0,0), thickness=1)
-            pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(0,0,255), thickness=5)
+            pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(255,255,255), thickness=5)
             cv2.imshow("Polar Image", pimg)
             cv2.waitKey(1)
         except:
