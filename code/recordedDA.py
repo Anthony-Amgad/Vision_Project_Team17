@@ -112,8 +112,9 @@ ground_truth = cv2.merge((ground_truth,ground_truth,ground_truth))*0
 
 with open(csvpath, 'r') as file:
   csvreader = list(csv.reader(file, delimiter=';'))
-  
+  count = 0
   for row in csvreader[1:]:
+    count += 1
     impath = row[0]
     imxp = np.float64(row[5])
     imyp = np.float64(row[6])
@@ -186,6 +187,10 @@ with open(csvpath, 'r') as file:
         cv2.imshow('Navigatabile Warped Terrain Image', threshed*255)
         cv2.imshow('Obstical Warpeed Terrain Image', obstic*255)
         cv2.imshow('Rock Warped Terrain Image', rocks*255)
+        cv2.imwrite('RDAoutput/Warped Images/img'+str(count)+'.jpg', warped)
+        cv2.imwrite('RDAoutput/Navigatabile Warped Terrain Images/img'+str(count)+'.jpg', threshed*255)
+        cv2.imwrite('RDAoutput/Obstical Warpeed Terrain Images/img'+str(count)+'.jpg', obstic*255)
+        cv2.imwrite('RDAoutput/Rock Warped Terrain Images/img'+str(count)+'.jpg', rocks*255)
         pimg = np.zeros((321,161,3), np.uint8)
         oxpi = np.int_(oxp)
         oypi = np.int_(oyp)
@@ -201,6 +206,8 @@ with open(csvpath, 'r') as file:
             pimg = cv2.circle(pimg, (xpi[i],ypi[i]+160), radius=0, color=(255,0,0), thickness=1)
         pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(255,255,255), thickness=5)
         cv2.imshow("Polar Image", pimg)
+        cv2.imwrite("RDAoutput/Polar Images/img"+str(count)+'.jpg', pimg)
+
         
     except:
         print("no blues")
@@ -208,5 +215,7 @@ with open(csvpath, 'r') as file:
 
     cv2.imshow('Map Image', ground_truth)
     cv2.imshow('Vision Image', vision_image)
+    cv2.imwrite('RDAoutput/Map Images/img'+str(count)+'.jpg', ground_truth)
+    cv2.imwrite('RDAoutput/Vision Images/img'+str(count)+'.jpg', vision_image)
     cv2.waitKey(10)
 
