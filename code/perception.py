@@ -3,7 +3,7 @@ import cv2
 
 # Identify pixels above the threshold
 # Threshold of RGB > 160 does a nice job of identifying ground pixels only
-def color_thresh(img, rgb_thresh=(150, 150, 150)):
+def color_thresh(img, rgb_thresh=(160, 160, 160)):
     # Create an array of zeros same xy size as img, but single channel
     color_select = np.zeros_like(img[:,:,0])
     # Require that each pixel be above all three threshold values in RGB
@@ -135,6 +135,7 @@ def perception_step(Rover):
 
     threshed = color_thresh(warped)
     obstic = cv2.bitwise_and(obst_thresh(warped), mask)
+
     rocks = rock_thresh(warped)
 
     # 4) Update Rover.vision_image (this will be displayed on left side of screen)
