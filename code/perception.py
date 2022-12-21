@@ -143,20 +143,33 @@ def perception_step(Rover):
         #          Rover.vision_image[:,:,1] = rock_sample color-thresholded binary image
         #          Rover.vision_image[:,:,2] = navigable terrain color-thresholded binary image
 
+    """
     Rover.vision_image[:,:,2] = color_thresh(image)*255
     Rover.vision_image[:,:,0] = obst_thresh(image)*255
     Rover.vision_image[:,:,1] = rock_thresh(image)*255
-
-
+    """
+    
+    Rover.vision_image[:,:,2] = threshed*255
+    Rover.vision_image[:,:,0] = obstic*255
+    Rover.vision_image[:,:,1] = rocks*255
+    
     # 5) Convert map image pixel values to rover-centric coords
-
+    #threshed[0:90] = 0
     xp, yp = rover_coords(threshed)
     oxp, oyp = rover_coords(obstic)
     rxp, ryp = rover_coords(rocks)
 
+
+    visdistance = np.sqrt(xp ** 2 + yp ** 2)
+    xp = xp[visdistance<70]
+    yp = yp[visdistance<70]
+
+    visdistance = np.sqrt(oxp ** 2 + oyp ** 2)
+    oxnp = oxp[visdistance<70]
+    oynp = oyp[visdistance<70]
+
     # 6) Convert rover-centric pixel values to world coordinates
 
-    dist, angles = to_polar_coords(xp, yp)
     worldmap = Rover.worldmap
 
     # 7) Update Rover worldmap (to be displayed on right side of screen)
@@ -164,25 +177,46 @@ def perception_step(Rover):
         #          Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
         #          Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
 
-    navigable_x_world, navigable_y_world = pix_to_world(xp,yp,Rover.pos[0],Rover.pos[1],Rover.yaw,worldmap.shape[0],2*dst_s)
-    Rover.worldmap[navigable_y_world, navigable_x_world, 2] = 255
-    Rover.worldmap[navigable_y_world, navigable_x_world, 0] = 0
 
-    obstacle_x_world, obstacle_y_world = pix_to_world(oxp,oyp,Rover.pos[0],Rover.pos[1],Rover.yaw,worldmap.shape[0],2*dst_s)
-    Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] = 255
 
-    rock_x_world, rock_y_world = pix_to_world(rxp,ryp,Rover.pos[0],Rover.pos[1],Rover.yaw,worldmap.shape[0],2*dst_s)
-    Rover.worldmap[rock_y_world, rock_x_world, 1] = 255
+    if (Rover.pitch < 0.2 or Rover.pitch > 359.8) and (Rover.roll < 0.2 or Rover.roll > 359.8) and (abs(Rover.steer) <= 14.5) and (Rover.brake == 0) and (not Rover.picking_up):
+
+        obstacle_x_world, obstacle_y_world = pix_to_world(oxnp,oynp,Rover.pos[0],Rover.pos[1],Rover.yaw,worldmap.shape[0],2*dst_s)
+        Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] = 255
+
+        navigable_x_world, navigable_y_world = pix_to_world(xp,yp,Rover.pos[0],Rover.pos[1],Rover.yaw,worldmap.shape[0],2*dst_s)
+        Rover.worldmap[navigable_y_world, navigable_x_world, 2] = 255
+        Rover.worldmap[navigable_y_world, navigable_x_world, 0] = 0
+
+        rock_x_world, rock_y_world = pix_to_world(rxp,ryp,Rover.pos[0],Rover.pos[1],Rover.yaw,worldmap.shape[0],2*dst_s)
+        Rover.worldmap[rock_y_world, rock_x_world, 1] = 255
+
+        Rover.worldmap = np.clip(Rover.worldmap, 0, 255)
 
 
     # 8) Convert rover-centric pixel positions to polar coordinates
     # Update Rover pixel distances and angles
         # Rover.nav_dists = rover_centric_pixel_distances
         # Rover.nav_angles = rover_centric_angles
-    
+    dist, angles = to_polar_coords(xp, yp)
     Rover.nav_dists = dist
     Rover.nav_angles = angles
 
+
+    rvisdistance = np.sqrt(rxp ** 2 + ryp ** 2)
+    rxdp = rxp[rvisdistance<45]
+    rydp = ryp[rvisdistance<45]
+
+    rdist, rangles = to_polar_coords(rxdp,rydp)
+    Rover.samples_angles = rangles
+    Rover.samples_dists = rdist
+
+    #visdistance = np.sqrt(oxp ** 2 + oyp ** 2)
+    oxdp = oxp[visdistance<45]
+    oydp = oyp[visdistance<45]
+    odist, oangles = to_polar_coords(oxdp,oydp)
+    Rover.obst_angles = oangles
+    Rover.obst_dists = odist
     # 9) Debugging Mode
     ######## SET TO TRUE IF YOU WANT DEBUGGING MODE ACTIVE
 
@@ -200,8 +234,8 @@ def perception_step(Rover):
             cv2.imshow('Obstical Warpeed Terrain Image', obstic*255)
             cv2.imshow('Rock Warped Terrain Image', rocks*255)
             pimg = np.zeros((321,161,3), np.uint8)
-            oxpi = np.int_(oxp)
-            oypi = np.int_(oyp)
+            oxpi = np.int_(oxnp)
+            oypi = np.int_(oynp)
             for i in range(len(oxpi)):
                 pimg = cv2.circle(pimg, (oxpi[i],oypi[i]+160), radius=0, color=(0,0,255), thickness=1)
             rxpi = np.int_(rxp)
