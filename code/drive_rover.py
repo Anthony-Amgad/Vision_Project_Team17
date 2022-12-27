@@ -61,7 +61,7 @@ class RoverState():
         # get creative in adding new fields or modifying these!
         self.stop_forward = 200# Threshold to initiate stopping
         self.go_forward = 500 # Threshold to go forward again
-        self.max_vel = 0.8 # Maximum velocity (meters/second)
+        self.max_vel = 0.825 # Maximum velocity (meters/second)
         # Image output from perception step
         # Update this image to display your intermediate analysis steps
         # on screen in autonomous mode
@@ -80,7 +80,13 @@ class RoverState():
         self.obst_angles = None
         self.obst_dists = None
         self.stuck_time = 0
-        self.stuckmode = 'notstuck'
+        self.stuck = False
+        self.samples_angles = None
+        self.samples_dists = None
+        self.samples_angles2 = None
+        self.samples_dists2 = None 
+        self.samples_angles3 = None
+        self.samples_dists3 = None    
 # Initialize our rover 
 Rover = RoverState()
 

@@ -155,6 +155,7 @@ def perception_step(Rover):
     
     # 5) Convert map image pixel values to rover-centric coords
     #threshed[0:90] = 0
+    
     xp, yp = rover_coords(threshed)
     oxp, oyp = rover_coords(obstic)
     rxp, ryp = rover_coords(rocks)
@@ -179,10 +180,11 @@ def perception_step(Rover):
 
 
 
-    if (Rover.pitch < 0.2 or Rover.pitch > 359.8) and (Rover.roll < 0.2 or Rover.roll > 359.8) and (abs(Rover.steer) <= 14.5) and (Rover.brake == 0) and (not Rover.picking_up):
-
+    if ((Rover.pitch < 0.2 or Rover.pitch > 359.8) and (Rover.roll < 0.2 or Rover.roll > 359.8) and (abs(Rover.steer) <= 11) and (Rover.brake == 0) and (not Rover.picking_up)) or ((len(Rover.samples_angles) > 0) and (not Rover.picking_up) and (Rover.brake == 0)):
+        
         obstacle_x_world, obstacle_y_world = pix_to_world(oxnp,oynp,Rover.pos[0],Rover.pos[1],Rover.yaw,worldmap.shape[0],2*dst_s)
         Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] = 255
+        Rover.worldmap[obstacle_y_world, obstacle_x_world, 2] = 0
 
         navigable_x_world, navigable_y_world = pix_to_world(xp,yp,Rover.pos[0],Rover.pos[1],Rover.yaw,worldmap.shape[0],2*dst_s)
         Rover.worldmap[navigable_y_world, navigable_x_world, 2] = 255
@@ -202,18 +204,32 @@ def perception_step(Rover):
     Rover.nav_dists = dist
     Rover.nav_angles = angles
 
-
+    
     rvisdistance = np.sqrt(rxp ** 2 + ryp ** 2)
-    rxdp = rxp[rvisdistance<45]
-    rydp = ryp[rvisdistance<45]
+    rxdp1 = rxp[rvisdistance<36]
+    rydp1 = ryp[rvisdistance<36]
 
-    rdist, rangles = to_polar_coords(rxdp,rydp)
-    Rover.samples_angles = rangles
-    Rover.samples_dists = rdist
+    rocks[:,:150] = 0
+    rxp, ryp = rover_coords(rocks)
+    rvisdistance = np.sqrt(rxp ** 2 + ryp ** 2)
+    rxdp2 = rxp[rvisdistance<60]
+    rydp2 = ryp[rvisdistance<60]
 
-    #visdistance = np.sqrt(oxp ** 2 + oyp ** 2)
-    oxdp = oxp[visdistance<45]
-    oydp = oyp[visdistance<45]
+    rxp, ryp = rover_coords(rocks)
+
+    rdist2, rangles2 = to_polar_coords(rxdp2,rydp2)
+    rdist1, rangles1 = to_polar_coords(rxdp1,rydp1)
+    rdist3, rangles3 = to_polar_coords(rxp, ryp)
+    Rover.samples_angles = rangles1
+    Rover.samples_dists = rdist1
+    Rover.samples_angles2 = rangles2
+    Rover.samples_dists2 = rdist2
+    Rover.samples_dists3 = rdist3
+    Rover.samples_angles3 = rangles3
+
+    visdistance = np.sqrt(oxp ** 2 + oyp ** 2)
+    oxdp = oxp[visdistance<31]
+    oydp = oyp[visdistance<31]
     odist, oangles = to_polar_coords(oxdp,oydp)
     Rover.obst_angles = oangles
     Rover.obst_dists = odist
