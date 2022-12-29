@@ -5,7 +5,7 @@ import time
 # commands based on the output of the perception_step() function
 def decision_step(Rover):
 
-    if Rover.vel <= 0.1 and (Rover.total_time - Rover.stuck_time > 4):
+    if Rover.vel <= 0.1 and (Rover.total_time - Rover.stuck_time > 4) and Rover.mode != 'lockedin':
         # Set mode to "stuck" and hit the brakes
         Rover.stuck = True
         Rover.throttle = 0
@@ -24,65 +24,10 @@ def decision_step(Rover):
         print('FOUND')
         Rover.stuck_time = Rover.total_time
 
-
-        """
-        if np.mean(Rover.samples_dists) >= 10:  
-            # If mode is forward, navigable terrain looks good 
-            # and velocity is below max, then throttle 
-            if Rover.vel < 0.5:
-                # Set throttle value to throttle setting
-                Rover.throttle = Rover.throttle_set*1.5
-                Rover.brake = 0
-                # Set steering to average angle clipped to the range +/- 15
-                Rover.steer = np.clip(np.mean(Rover.samples_angles * 180/np.pi), -15, 15)
-            else: # Else coast
-                Rover.throttle = 0
-                Rover.brake = 5
-                Rover.steer = np.clip(np.mean(Rover.samples_angles * 180/np.pi), -15, 15)
-                Rover.stuck_time = Rover.total_time
-        elif np.mean(Rover.samples_dists) < 10:
-                # Set mode to "stop" and hit the brakes!
-                Rover.throttle = 0
-                # Set brake to stored brake value
-                Rover.brake = Rover.brake_set
-                Rover.steer = 0
-                Rover.mode = 'stop'
-                if not Rover.picking_up:
-                    Rover.send_pickup = True
-        
-    
-    elif (len(Rover.samples_angles2) > 0) and Rover.mode != 'stuck':
-        if np.mean(Rover.samples_dists2) >= 10:  
-            # If mode is forward, navigable terrain looks good 
-            # and velocity is below max, then throttle 
-            if Rover.vel < 0.6:
-                # Set throttle value to throttle setting
-                Rover.throttle = Rover.throttle_set*1.5
-                Rover.brake = 0
-                # Set steering to average angle clipped to the range +/- 15
-                Rover.steer = np.clip(np.mean(Rover.samples_angles2 * 180/np.pi), -15, 15)
-            else: # Else coast
-                Rover.throttle = 0
-                Rover.brake = 1
-                Rover.steer = np.clip(np.mean(Rover.samples_angles2 * 180/np.pi), -15, 15)
-                Rover.stuck_time = Rover.total_time
-            
-        # If there's a lack of navigable terrain pixels then go to 'stop' mode
-        elif np.mean(Rover.samples_dists2) < 10:
-                # Set mode to "stop" and hit the brakes!
-                Rover.throttle = 0
-                # Set brake to stored brake value
-                Rover.brake = Rover.brake_set
-                Rover.steer = 0
-                Rover.mode = 'stop'
-                if not Rover.picking_up:
-                    Rover.send_pickup = True
-    """
     elif Rover.mode == 'found' and (len(Rover.samples_angles3) > 0):
         Rover.send_pickup = False
         Rover.brake = 5
         Rover.throttle = 0
-        Rover.stuck_time = Rover.total_time
         if Rover.vel == 0 and (Rover.pitch < 0.5 or Rover.pitch > 359.5) and (Rover.roll < 0.5 or Rover.roll > 359.5):
             Rover.mode = 'lockedin'
     
