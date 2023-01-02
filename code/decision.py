@@ -13,11 +13,7 @@ def decision_step(Rover):
         Rover.brake = Rover.brake_set
         Rover.steer = 0
         Rover.stuck_time = Rover.total_time
-    #elif Rover.vel <= 0.1 and Rover.mode != 'instuck':
-        #Rover.stuck_time = Rover.total_time
-        #Rover.stuckmode = 'instuck'
-    #elif Rover.vel > 0.1 and Rover.stuckmode == 'instuck':
-        #Rover.stuckmode = 'notstuck'
+
     
     if ((len(Rover.samples_angles) > 5) or (len(Rover.samples_angles2) > 10)) and (not Rover.stuck) and Rover.mode != 'found' and Rover.mode != 'lockedin' and Rover.mode != 'pick' and Rover.mode != 'pickup' and Rover.mode != 'stop':
         Rover.mode = 'found'
@@ -50,7 +46,6 @@ def decision_step(Rover):
             Rover.throttle = Rover.throttle_set
             Rover.brake = 0
             # Set steering to average angle clipped to the range +/- 15
-            #mangle = (np.mean(Rover.samples_angles2 * 180/np.pi)+np.mean(Rover.samples_angles * 180/np.pi))/2
             Rover.steer = np.clip(mangle, -15, 15)
         else: # Else coast
             Rover.throttle = 0
@@ -76,7 +71,7 @@ def decision_step(Rover):
             Rover.mode = 'stop'
 
     elif Rover.mode == 'pick' and Rover.stuck:
-        # if 1 sec passed go back to previous mode
+        # if 0.3 sec passed go back to previous mode
         if Rover.total_time - Rover.stuck_time > 0.3:
             # Set throttle back to stored value
             Rover.throttle = Rover.throttle_set

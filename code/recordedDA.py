@@ -116,9 +116,13 @@ with open(csvpath, 'r') as file:
   for row in csvreader[1:]:
     count += 1
     impath = row[0]
+    imsteer = np.float64(row[1])
+    imbrake = np.float64(row[3])
     imxp = np.float64(row[5])
     imyp = np.float64(row[6])
+    impitch = np.float64(row[7])
     imyaw = np.float64(row[8])
+    imroll = np.float64(row[9])
     image = mpimg.imread(impath)
     vision_image = cv2.imread(impath)
     
@@ -160,27 +164,55 @@ with open(csvpath, 'r') as file:
     oxp, oyp = rover_coords(obstic)
     rxp, ryp = rover_coords(rocks)
 
+    visdistance = np.sqrt(xp ** 2 + yp ** 2)
+    xp = xp[visdistance<70]
+    yp = yp[visdistance<70]
+
+    visdistance = np.sqrt(oxp ** 2 + oyp ** 2)
+    oxnp = oxp[visdistance<70]
+    oynp = oyp[visdistance<70]
+
     # 6) Convert rover-centric pixel values to world coordinates
 
     dist, angles = to_polar_coords(xp, yp)
 
+    visdistance = np.sqrt(oxp ** 2 + oyp ** 2)
+    oxdp = oxp[visdistance<31]
+    oydp = oyp[visdistance<31]
+    odist, oangles = to_polar_coords(oxdp,oydp)
+
+    rvisdistance = np.sqrt(rxp ** 2 + ryp ** 2)
+    rxdp1 = rxp[rvisdistance<36]
+    rydp1 = ryp[rvisdistance<36]
+    rdist1, rangles1 = to_polar_coords(rxdp1,rydp1)
+    rdist3, rangles3 = to_polar_coords(rxp, ryp)
+
     # 7) Update Rover worldmap (to be displayed on right side of screen)
 
-    obstacle_x_world, obstacle_y_world = pix_to_world(oxp,oyp,imxp,imyp,imyaw,ground_truth.shape[0],2*dst_s)
-    ground_truth[obstacle_y_world, obstacle_x_world, 2] = 255
+    if ((impitch < 0.2 or impitch > 359.8) and (imroll < 0.2 or imroll > 359.8) and (abs(imsteer) <= 11) and (imbrake == 0)) or ((len(rangles1) > 0) and (imbrake == 0)):
+        
+        obstacle_x_world, obstacle_y_world = pix_to_world(oxnp,oynp,imxp,imyp,imyaw,ground_truth.shape[0],2*dst_s)
+        ground_truth[obstacle_y_world, obstacle_x_world, 2] = 255
+        ground_truth[obstacle_y_world, obstacle_x_world, 0] = 0
 
-    rock_x_world, rock_y_world = pix_to_world(rxp,ryp,imxp,imyp,imyaw,ground_truth.shape[0],2*dst_s)
-    ground_truth[rock_y_world, rock_x_world, 1] = 255
+        rock_x_world, rock_y_world = pix_to_world(rxp,ryp,imxp,imyp,imyaw,ground_truth.shape[0],2*dst_s)
+        ground_truth[rock_y_world, rock_x_world, 1] = 255
 
-    navigable_x_world, navigable_y_world = pix_to_world(xp,yp,imxp,imyp,imyaw,ground_truth.shape[0],2*dst_s)
-    ground_truth[navigable_y_world, navigable_x_world, 0] = 255
-    ground_truth[navigable_y_world, navigable_x_world, 2] = 0
+        navigable_x_world, navigable_y_world = pix_to_world(xp,yp,imxp,imyp,imyaw,ground_truth.shape[0],2*dst_s)
+        ground_truth[navigable_y_world, navigable_x_world, 0] = 255
+        ground_truth[navigable_y_world, navigable_x_world, 2] = 0
     
 
     arrow_length = 100
     mean_dir = np.mean(angles)
+    stdev = 0.8 * np.std(angles * 180/np.pi) * (np.pi/180)
+    mean_rdir = np.mean(rangles3)
+    xr_arrow = arrow_length * np.cos(mean_rdir)
+    yr_arrow = arrow_length * np.sin(mean_rdir)
     x_arrow = arrow_length * np.cos(mean_dir)
     y_arrow = arrow_length * np.sin(mean_dir)
+    x_new_arrow = arrow_length * np.cos(mean_dir - stdev)
+    y_new_arrow = arrow_length * np.sin(mean_dir - stdev)
     try:
         cv2.imshow('Original Image', image)
         cv2.imshow('Warped Image', warped)
@@ -204,13 +236,24 @@ with open(csvpath, 'r') as file:
         ypi = np.int_(yp)
         for i in range(len(xpi)):
             pimg = cv2.circle(pimg, (xpi[i],ypi[i]+160), radius=0, color=(255,0,0), thickness=1)
-        pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(255,255,255), thickness=5)
+        if (len(rangles3) > 0):
+            pimg = cv2.line(pimg, (0,160), (int(xr_arrow), int(yr_arrow)+160), color=(0,255,255), thickness=5)
+        if np.min(np.absolute(oangles * 180/np.pi)) > 16:
+            pimg = cv2.line(pimg, (0,160), (int(x_new_arrow), int(y_new_arrow)+160), color=(255,255,255), thickness=5)
+            pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(255,255,0), thickness=5)
+        else:
+            pimg = cv2.line(pimg, (0,160), (int(x_new_arrow), int(y_new_arrow)+160), color=(255,255,0), thickness=5)
+            pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(255,255,255), thickness=5)
         cv2.imshow("Polar Image", pimg)
         cv2.imwrite("RDAoutput/Polar Images/img"+str(count)+'.jpg', pimg)
 
         
     except:
         print("no blues")
+        pimg = cv2.line(pimg, (0,160), (int(x_new_arrow), int(y_new_arrow)+160), color=(255,255,255), thickness=5)
+        pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(255,255,0), thickness=5)
+        cv2.imshow("Polar Image", pimg)
+        cv2.imwrite("RDAoutput/Polar Images/img"+str(count)+'.jpg', pimg)
 
 
     cv2.imshow('Map Image', ground_truth)
