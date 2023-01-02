@@ -224,8 +224,8 @@ with open(csvpath, 'r') as file:
         cv2.imwrite('RDAoutput/Obstical Warpeed Terrain Images/img'+str(count)+'.jpg', obstic*255)
         cv2.imwrite('RDAoutput/Rock Warped Terrain Images/img'+str(count)+'.jpg', rocks*255)
         pimg = np.zeros((321,161,3), np.uint8)
-        oxpi = np.int_(oxp)
-        oypi = np.int_(oyp)
+        oxpi = np.int_(oxnp)
+        oypi = np.int_(oynp)
         for i in range(len(oxpi)):
             pimg = cv2.circle(pimg, (oxpi[i],oypi[i]+160), radius=0, color=(0,0,255), thickness=1)
         rxpi = np.int_(rxp)
@@ -250,8 +250,9 @@ with open(csvpath, 'r') as file:
         
     except:
         print("no blues")
-        pimg = cv2.line(pimg, (0,160), (int(x_new_arrow), int(y_new_arrow)+160), color=(255,255,255), thickness=5)
-        pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(255,255,0), thickness=5)
+        if x_new_arrow == x_new_arrow and y_new_arrow == y_new_arrow and x_arrow == x_arrow and y_arrow == y_arrow:
+                pimg = cv2.line(pimg, (0,160), (int(x_new_arrow), int(y_new_arrow)+160), color=(255,255,255), thickness=5)
+                pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(255,255,0), thickness=5)
         cv2.imshow("Polar Image", pimg)
         cv2.imwrite("RDAoutput/Polar Images/img"+str(count)+'.jpg', pimg)
 

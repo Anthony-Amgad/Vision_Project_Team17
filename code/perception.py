@@ -242,9 +242,10 @@ def perception_step(Rover):
         arrow_length = 100
         mean_dir = np.mean(angles)
         stdev = 0.8 * np.std(angles * 180/np.pi) * (np.pi/180)
-        mean_rdir = np.mean(rangles3)
-        xr_arrow = arrow_length * np.cos(mean_rdir)
-        yr_arrow = arrow_length * np.sin(mean_rdir)
+        if len(rangles3) > 0:
+            mean_rdir = np.mean(rangles3)
+            xr_arrow = arrow_length * np.cos(mean_rdir)
+            yr_arrow = arrow_length * np.sin(mean_rdir)
         x_arrow = arrow_length * np.cos(mean_dir)
         y_arrow = arrow_length * np.sin(mean_dir)
         x_new_arrow = arrow_length * np.cos(mean_dir - stdev)
@@ -278,13 +279,15 @@ def perception_step(Rover):
                     pimg = cv2.line(pimg, (0,160), (int(x_new_arrow), int(y_new_arrow)+160), color=(255,255,0), thickness=5)
                     pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(255,255,255), thickness=5)
             else:
-                pimg = cv2.line(pimg, (0,160), (int(xr_arrow), int(yr_arrow)+160), color=(0,255,255), thickness=5) 
+                if len(rangles3) > 0:
+                    pimg = cv2.line(pimg, (0,160), (int(xr_arrow), int(yr_arrow)+160), color=(0,255,255), thickness=5) 
             cv2.imshow("Polar Image", pimg)
             
         except:
             print("no blues")
-            pimg = cv2.line(pimg, (0,160), (int(x_new_arrow), int(y_new_arrow)+160), color=(255,255,255), thickness=5)
-            pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(255,255,0), thickness=5)
+            if x_new_arrow == x_new_arrow and y_new_arrow == y_new_arrow and x_arrow == x_arrow and y_arrow == y_arrow:
+                pimg = cv2.line(pimg, (0,160), (int(x_new_arrow), int(y_new_arrow)+160), color=(255,255,255), thickness=5)
+                pimg = cv2.line(pimg, (0,160), (int(x_arrow), int(y_arrow)+160), color=(255,255,0), thickness=5)
             cv2.imshow("Polar Image", pimg)
         
         cv2.waitKey(1)
