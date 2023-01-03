@@ -212,8 +212,8 @@ def perception_step(Rover):
     rocks[:,:150] = 0
     rxp, ryp = rover_coords(rocks)
     rvisdistance = np.sqrt(rxp ** 2 + ryp ** 2)
-    rxdp2 = rxp[rvisdistance<60]
-    rydp2 = ryp[rvisdistance<60]
+    rxdp2 = rxp[rvisdistance<70]
+    rydp2 = ryp[rvisdistance<70]
 
     rxp, ryp = rover_coords(rocks)
 
@@ -228,8 +228,8 @@ def perception_step(Rover):
     Rover.samples_angles3 = rangles3
 
     visdistance = np.sqrt(oxp ** 2 + oyp ** 2)
-    oxdp = oxp[visdistance<31]
-    oydp = oyp[visdistance<31]
+    oxdp = oxp[visdistance<37]
+    oydp = oyp[visdistance<37]
     odist, oangles = to_polar_coords(oxdp,oydp)
     Rover.obst_angles = oangles
     Rover.obst_dists = odist

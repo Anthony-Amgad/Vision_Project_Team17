@@ -28,14 +28,20 @@ def decision_step(Rover):
             Rover.mode = 'lockedin'
     
     
-    elif Rover.mode == 'lockedin' and (len(Rover.samples_angles3) > 0):
-        mangle = np.mean(Rover.samples_angles3 * 180/np.pi)
+    elif Rover.mode == 'lockedin':
+        if  (len(Rover.samples_angles3) > 0):
+            mangle = np.mean(Rover.samples_angles3 * 180/np.pi)
 
-        if (mangle < 15) and (mangle > -15):
-            Rover.mode = 'pick'
+            if (mangle < 15) and (mangle > -15):
+                Rover.mode = 'pick'
+            else:
+                Rover.brake = 0
+                Rover.steer = np.clip(mangle, -15, 15)
+                Rover.stuck_time = Rover.total_time
+        
         else:
             Rover.brake = 0
-            Rover.steer = np.clip(mangle, -15, 15)
+            Rover.steer = 15
             Rover.stuck_time = Rover.total_time
 
     
