@@ -15,34 +15,38 @@ def decision_step(Rover):
         Rover.stuck_time = Rover.total_time
 
     
-    if ((len(Rover.samples_angles) > 5) or (len(Rover.samples_angles2) > 10)) and (not Rover.stuck) and Rover.mode != 'found' and Rover.mode != 'lockedin' and Rover.mode != 'pick' and Rover.mode != 'pickup' and Rover.mode != 'stop':
+    if ((len(Rover.samples_angles) >= 5) or (len(Rover.samples_angles2) >= 10)) and (not Rover.stuck) and Rover.mode != 'found' and Rover.mode != 'lockedin' and Rover.mode != 'pick' and Rover.mode != 'pickup' and Rover.mode != 'stop':
         Rover.mode = 'found'
         print('FOUND')
         Rover.stuck_time = Rover.total_time
 
-    elif Rover.mode == 'found' and (len(Rover.samples_angles3) > 0):
+    elif Rover.mode == 'found':
         Rover.send_pickup = False
         Rover.brake = 5
         Rover.throttle = 0
         if Rover.vel == 0 and (Rover.pitch < 0.5 or Rover.pitch > 359.5) and (Rover.roll < 0.5 or Rover.roll > 359.5):
+            Rover.found_time = Rover.total_time
             Rover.mode = 'lockedin'
     
     
     elif Rover.mode == 'lockedin':
-        if  (len(Rover.samples_angles3) > 0):
-            mangle = np.mean(Rover.samples_angles3 * 180/np.pi)
+        if Rover.total_time - Rover.found_time <= 30:
+            if  (len(Rover.samples_angles3) > 0):
+                mangle = np.mean(Rover.samples_angles3 * 180/np.pi)
 
-            if (mangle < 15) and (mangle > -15):
-                Rover.mode = 'pick'
+                if (mangle < 15) and (mangle > -15):
+                    Rover.mode = 'pick'
+                else:
+                    Rover.brake = 0
+                    Rover.steer = np.clip(mangle, -15, 15)
+                    Rover.stuck_time = Rover.total_time
+            
             else:
                 Rover.brake = 0
-                Rover.steer = np.clip(mangle, -15, 15)
+                Rover.steer = 15
                 Rover.stuck_time = Rover.total_time
-        
         else:
-            Rover.brake = 0
-            Rover.steer = 15
-            Rover.stuck_time = Rover.total_time
+            Rover.mode = 'stop'
 
     
     elif Rover.mode == 'pick' and (len(Rover.samples_angles3) > 0) and (not Rover.stuck):     

@@ -155,7 +155,6 @@ def perception_step(Rover):
     """
     # 5) Convert map image pixel values to rover-centric coords
     #threshed[0:90] = 0
-    
     xp, yp = rover_coords(threshed)
     oxp, oyp = rover_coords(obstic)
     rxp, ryp = rover_coords(rocks)
@@ -212,8 +211,8 @@ def perception_step(Rover):
     rocks[:,:150] = 0
     rxp, ryp = rover_coords(rocks)
     rvisdistance = np.sqrt(rxp ** 2 + ryp ** 2)
-    rxdp2 = rxp[rvisdistance<70]
-    rydp2 = ryp[rvisdistance<70]
+    rxdp2 = rxp[rvisdistance<80]
+    rydp2 = ryp[rvisdistance<80]
 
     rxp, ryp = rover_coords(rocks)
 

@@ -80,6 +80,7 @@ class RoverState():
         self.obst_angles = None
         self.obst_dists = None
         self.stuck_time = 0
+        self.found_time = 0
         self.stuck = False
         self.samples_angles = None
         self.samples_dists = None
