@@ -5,6 +5,7 @@ import time
 # commands based on the output of the perception_step() function
 def decision_step(Rover):
 
+    # Stuck condition if rover has almost 0 velocity for more than 4 seconds
     if Rover.vel <= 0.1 and (Rover.total_time - Rover.stuck_time > 4) and Rover.mode != 'lockedin':
         # Set mode to "stuck" and hit the brakes
         Rover.stuck = True
@@ -14,13 +15,15 @@ def decision_step(Rover):
         Rover.steer = 0
         Rover.stuck_time = Rover.total_time
 
-    
+    #DECISION TREE
+
+    # Checking if any samples entered the vecinity mask for found
     if ((len(Rover.samples_angles) >= 1) or (len(Rover.samples_angles2) >= 13)) and (not Rover.stuck) and Rover.mode != 'found' and Rover.mode != 'lockedin' and Rover.mode != 'pick' and Rover.mode != 'pickup' and Rover.mode != 'stop':
         Rover.mode = 'found'
         print('FOUND')
         Rover.stuck_time = Rover.total_time
 
-
+    # Braking entirely in this mode
     elif Rover.mode == 'found':
         Rover.send_pickup = False
         Rover.brake = 5
@@ -29,7 +32,7 @@ def decision_step(Rover):
             Rover.found_time = Rover.total_time
             Rover.mode = 'lockedin'
     
-    
+    # Searching for the sample and keeping it within 20 degrees
     elif Rover.mode == 'lockedin':
         if Rover.total_time - Rover.found_time <= 30:
             if  (len(Rover.samples_angles3) > 0):
@@ -42,17 +45,16 @@ def decision_step(Rover):
                     Rover.steer = np.clip(mangle, -15, 15)
                     Rover.stuck_time = Rover.total_time
             
-            else:
+            else: # Sample is not found so keep turning left till it's found again
                 Rover.brake = 0
                 Rover.steer = 15
                 Rover.stuck_time = Rover.total_time
-        else:
+        
+        else: # If searching has been going on for 30 seconds or more with no results give up
             Rover.mode = 'stop'
 
-        if np.mean(Rover.samples_dists3) < 9:
-            # Set mode to "stop" and hit the brakes!
+        if np.mean(Rover.samples_dists3) < 9: # If samples are within 9 pixels go to pickup
             Rover.throttle = 0
-            # Set brake to stored brake value
             Rover.brake = Rover.brake_set
             Rover.steer = 0
             Rover.found_time = Rover.total_time
@@ -61,7 +63,7 @@ def decision_step(Rover):
     
     elif Rover.mode == 'pick' and (len(Rover.samples_angles3) > 0) and (not Rover.stuck):     
         mangle = np.mean(Rover.samples_angles3 * 180/np.pi)
-        if Rover.vel < Rover.max_vel:
+        if Rover.vel < Rover.max_vel: # Go towards rock
             # Set throttle value to throttle setting
             Rover.throttle = Rover.throttle_set
             Rover.brake = 0
@@ -70,20 +72,18 @@ def decision_step(Rover):
         else: # Else coast
             Rover.throttle = 0
         
-        if np.mean(Rover.samples_dists3) < 9:
-            # Set mode to "stop" and hit the brakes!
+        if np.mean(Rover.samples_dists3) < 9: # If samples are within 9 pixels go to pickup
             Rover.throttle = 0
-            # Set brake to stored brake value
             Rover.brake = Rover.brake_set
             Rover.steer = 0
             Rover.found_time = Rover.total_time
             Rover.mode = 'pickup'
 
-    elif Rover.mode == 'pick' and (len(Rover.samples_angles3) == 0) and (not Rover.stuck):
+    elif Rover.mode == 'pick' and (len(Rover.samples_angles3) == 0) and (not Rover.stuck): #If sample was lost search again
         Rover.mode = 'found'
             
 
-    elif Rover.mode == 'pickup':
+    elif Rover.mode == 'pickup': # Break and start picking up
         if Rover.vel != 0:
             Rover.brake = Rover.brake_set
         elif (not Rover.picking_up) and (Rover.vel == 0):
@@ -92,7 +92,7 @@ def decision_step(Rover):
             Rover.send_pickup = True
             Rover.mode = 'stop'
 
-    elif Rover.mode == 'pick' and Rover.stuck:
+    elif Rover.mode == 'pick' and Rover.stuck: # If stuck while heading towards rock
         # if 0.3 sec passed go back to previous mode
         if Rover.total_time - Rover.stuck_time > 0.3:
             # Set throttle back to stored value
@@ -107,18 +107,13 @@ def decision_step(Rover):
             Rover.brake = 0
             Rover.steer = 15
     
-    # Implement conditionals to decide what to do given perception data
-    # Here you're all set up with some basic functionality but you'll need to
-    # improve on this decision tree to do a good job of navigating autonomously!
-
-    # Example:
     # Check if we have vision data to make decisions with
     elif Rover.nav_angles is not None:
         # Check for Rover.mode status
         if Rover.mode == 'forward' and (not Rover.stuck): 
             Rover.send_pickup = False
-            # Check the extent of navigable terrain
-            if (len(Rover.nav_angles) >= Rover.stop_forward) and (len(Rover.obst_angles2) <= 12):  
+            # Check the extent of navigable terrain and make sure there are no obsticales near
+            if (len(Rover.nav_angles) >= Rover.stop_forward) and (len(Rover.obst_angles2) <= 13):  
                 # If mode is forward, navigable terrain looks good 
                 # and velocity is below max, then throttle 
                 if Rover.vel < Rover.max_vel:
@@ -129,7 +124,7 @@ def decision_step(Rover):
                 Rover.brake = 0
                 # Set steering to average angle clipped to the range +/- 15
                 try:
-                    if (np.min(np.absolute(Rover.obst_angles * 180/np.pi)) > 16):
+                    if (np.min(np.absolute(Rover.obst_angles * 180/np.pi)) > 16): # If there are no obsticales within 16 degrees and 37 pixels away
                         Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi)-(0.8 * np.std(Rover.nav_angles * 180/np.pi)), -15, 15)
                         
                     else:
@@ -138,8 +133,8 @@ def decision_step(Rover):
                 except:
                     print("Steering can't find near obst")
                     Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi)-(0.8 * np.std(Rover.nav_angles * 180/np.pi)), -15, 15)
-            # If there's a lack of navigable terrain pixels then go to 'stop' mode
-            elif (len(Rover.nav_angles) < Rover.stop_forward) or (len(Rover.obst_angles2) > 12):
+            # If there's a lack of navigable terrain pixels or there are more than 13 pixels of obsticales within a 13 pixel radius then go to 'stop' mode
+            elif (len(Rover.nav_angles) < Rover.stop_forward) or (len(Rover.obst_angles2) > 13):
                     # Set mode to "stop" and hit the brakes!
                     Rover.throttle = 0
                     # Set brake to stored brake value
@@ -157,15 +152,15 @@ def decision_step(Rover):
                 Rover.steer = 0
             # If we're not moving (vel < 0.2) then do something else
             elif Rover.vel <= 0.2:
-                # Now we're stopped and we have vision data to see if there's a path forward
-                if (len(Rover.nav_angles) < Rover.go_forward) or (len(Rover.obst_angles2) >= 5):
+                # Now we're stopped and we have vision data to see if there's a path forward and no obsticales near
+                if (len(Rover.nav_angles) < Rover.go_forward) or (len(Rover.obst_angles2) >= 6):
                     Rover.throttle = 0
                     # Release the brake to allow turning
                     Rover.brake = 0
-                    # Turn range is +/- 15 degrees, when stopped the next line will induce 4-wheel turning
+                    # Turn Left
                     Rover.steer = 15 # Could be more clever here about which way to turn
-                # If we're stopped but see sufficient navigable terrain in front then go!
-                if (len(Rover.nav_angles) >= Rover.go_forward) and (len(Rover.obst_angles2) < 5) and (not Rover.picking_up) and (not Rover.send_pickup):
+                # If we're stopped but see sufficient navigable terrain in front and no obsticales near then go!
+                if (len(Rover.nav_angles) >= Rover.go_forward) and (len(Rover.obst_angles2) < 6) and (not Rover.picking_up) and (not Rover.send_pickup):
                     # Set throttle back to stored value
                     Rover.throttle = Rover.throttle_set
                     # Release the brake
@@ -174,7 +169,7 @@ def decision_step(Rover):
                     Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
                     Rover.mode = 'forward'
         
-        elif Rover.stuck:
+        elif Rover.stuck: # If stuck while moving forward
             Rover.send_pickup = False
             # if 1 sec passed go back to previous mode
             if Rover.total_time - Rover.stuck_time > 1:
@@ -189,6 +184,7 @@ def decision_step(Rover):
                 # Release the brake to allow turning
                 Rover.brake = 0
                 Rover.steer = 15
+
     # Just to make the rover do something 
     # even if no modifications have been made to the code
     else:
@@ -196,11 +192,8 @@ def decision_step(Rover):
         Rover.throttle = Rover.throttle_set
         Rover.brake = 0
         
-    # If in a state where want to pickup a rock send pickup command
-    #if Rover.near_sample and Rover.vel == 0 and not Rover.picking_up:
-        #Rover.send_pickup = True
-
-    print("##################### "+ Rover.mode + " ########### " + str(Rover.stuck))
+    
+    print("###### Rover Mode: "+ Rover.mode + " ###### Rover Stuck: " + str(Rover.stuck))
     
     return Rover
 

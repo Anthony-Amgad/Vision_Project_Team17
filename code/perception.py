@@ -110,7 +110,9 @@ def perception_step(Rover):
     # TODO: 
     # NOTE: camera image is coming to you in Rover.img
     image = Rover.img
-    # 1) Define source and destination points for perspective transform
+
+
+    # Define source and destination points for perspective transform (Warping)
     dst_s = 5
     bottom_offset = 5
     
@@ -124,41 +126,41 @@ def perception_step(Rover):
                           [image.shape[1] / 2 + dst_s, image.shape[0] - 2*dst_s - bottom_offset],
                           [image.shape[1] / 2 - dst_s, image.shape[0] - 2*dst_s - bottom_offset]])
     
-    # 2) Apply perspective transform
+
+    # Apply perspective transform
 
     warped = perspect_transform(image, source, destination)
     
+    # Creating a mask so that nothing is detected out of our cone of vision
+
     mask = np.ones_like(image[:,:,0], np.uint8)
     mask = perspect_transform(mask, source, destination)
 
-    # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
+    # Apply color threshold to identify navigable terrain/obstacles/rock samples
 
     threshed = color_thresh(warped)
     obstic = cv2.bitwise_and(obst_thresh(warped), mask)
-
     rocks = rock_thresh(warped)
 
-    # 4) Update Rover.vision_image (this will be displayed on left side of screen)
-        # Example: Rover.vision_image[:,:,0] = obstacle color-thresholded binary image
-        #          Rover.vision_image[:,:,1] = rock_sample color-thresholded binary image
-        #          Rover.vision_image[:,:,2] = navigable terrain color-thresholded binary image
-
+    # Update Rover.vision_image (the original image) for ease of user experience (this will be displayed on left side of screen)
     
     Rover.vision_image[:,:,2] = color_thresh(image)*255
     Rover.vision_image[:,:,0] = obst_thresh(image)*255
     Rover.vision_image[:,:,1] = rock_thresh(image)*255
     
-    """
+    """ # Incase the wapred images are wanted for ease of debuggin
     Rover.vision_image[:,:,2] = threshed*255
     Rover.vision_image[:,:,0] = obstic*255
     Rover.vision_image[:,:,1] = rocks*255
     """
-    # 5) Convert map image pixel values to rover-centric coords
-    #threshed[0:90] = 0
+
+    # Convert map image pixel values to rover-centric coords
+    
     xp, yp = rover_coords(threshed)
     oxp, oyp = rover_coords(obstic)
     rxp, ryp = rover_coords(rocks)
 
+    # Applying a 70 pixel radius to cut off around the rover
 
     visdistance = np.sqrt(xp ** 2 + yp ** 2)
     xp = xp[visdistance<70]
@@ -168,16 +170,9 @@ def perception_step(Rover):
     oxnp = oxp[visdistance<70]
     oynp = oyp[visdistance<70]
 
-    # 6) Convert rover-centric pixel values to world coordinates
+    # Convert rover-centric pixel values to world coordinates and update Rover worldmap (to be displayed on right side of screen)
 
     worldmap = Rover.worldmap
-
-    # 7) Update Rover worldmap (to be displayed on right side of screen)
-        # Example: Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
-        #          Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
-        #          Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
-
-
 
     if ((Rover.pitch < 0.2 or Rover.pitch > 359.8) and (Rover.roll < 0.2 or Rover.roll > 359.8) and (abs(Rover.steer) <= 11) and (Rover.brake == 0) and (not Rover.picking_up)) or ((len(Rover.samples_angles) > 0) and (not Rover.picking_up) and (Rover.brake == 0)):
         
@@ -195,27 +190,28 @@ def perception_step(Rover):
         Rover.worldmap = np.clip(Rover.worldmap, 0, 255)
 
 
-    # 8) Convert rover-centric pixel positions to polar coordinates
-    # Update Rover pixel distances and angles
-        # Rover.nav_dists = rover_centric_pixel_distances
-        # Rover.nav_angles = rover_centric_angles
+    # Convert rover-centric pixel positions to polar coordinates and update Rover pixel distances and angles
+      
     dist, angles = to_polar_coords(xp, yp)
     Rover.nav_dists = dist
     Rover.nav_angles = angles
 
-    
+    # First vicinity of rocks to enter 'found' mode
     rvisdistance = np.sqrt(rxp ** 2 + ryp ** 2)
     rxdp1 = rxp[rvisdistance<36]
     rydp1 = ryp[rvisdistance<36]
 
+    # All rocks to move towards them when a rock is found
     rxp, ryp = rover_coords(rocks)
 
+    # Second vicinity of rocks to enter 'found' mode
     rocks[:,:150] = 0
     rxp2, ryp2 = rover_coords(rocks)
     rvisdistance = np.sqrt(rxp2 ** 2 + ryp2 ** 2)
     rxdp2 = rxp2[rvisdistance<80]
     rydp2 = ryp2[rvisdistance<80]
 
+    # Updating the Rover state
     rdist2, rangles2 = to_polar_coords(rxdp2,rydp2)
     rdist1, rangles1 = to_polar_coords(rxdp1,rydp1)
     rdist3, rangles3 = to_polar_coords(rxp, ryp)
@@ -226,20 +222,30 @@ def perception_step(Rover):
     Rover.samples_dists3 = rdist3
     Rover.samples_angles3 = rangles3
 
+    ## Obsticale vicinities
     visdistance = np.sqrt(oxp ** 2 + oyp ** 2)
+
+    # This vicinity is to go to the average direction instead of hugging the wall
     oxdp = oxp[visdistance<37]
     oydp = oyp[visdistance<37]
-    oxdp2 = oxp[visdistance<12]
-    oydp2 = oyp[visdistance<12]
+
+    # This vicinity is to come to a complete stop
+    oxdp2 = oxp[visdistance<13]
+    oydp2 = oyp[visdistance<13]
+
+     # Updating the Rover state
     odist, oangles = to_polar_coords(oxdp,oydp)
     odist2, oangles2 = to_polar_coords(oxdp2,oydp2)
     Rover.obst_angles = oangles
     Rover.obst_dists = odist
     Rover.obst_angles2 = oangles2
     Rover.obst_dists2 = odist2
-    # 9) Debugging Mode
-    ######## SET TO TRUE IF YOU WANT DEBUGGING MODE ACTIVE
-
+    
+    
+    
+    ######## DEBUGGING MODE
+    
+    #### SET TO TRUE IF YOU WANT DEBUGGING MODE ACTIVE
     dbugmode = False
 
     if dbugmode:
