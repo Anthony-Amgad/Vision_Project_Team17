@@ -161,7 +161,7 @@ def perception_step(Rover):
     rxp, ryp = rover_coords(rocks)
 
     # Applying a 70 pixel radius to cut off around the rover
-
+    # To see a radius of 7 meters only 
     visdistance = np.sqrt(xp ** 2 + yp ** 2)
     xp = xp[visdistance<70]
     yp = yp[visdistance<70]
@@ -173,7 +173,8 @@ def perception_step(Rover):
     # Convert rover-centric pixel values to world coordinates and update Rover worldmap (to be displayed on right side of screen)
 
     worldmap = Rover.worldmap
-
+    # We need to make sure that the rover roll and pitch are around 0, and that the rover is not steering vigorously (for fidelity)
+    # We need to make sure that the rover is not braking or there is any rock that is getting picked up (for fidelity)
     if ((Rover.pitch < 0.2 or Rover.pitch > 359.8) and (Rover.roll < 0.2 or Rover.roll > 359.8) and (abs(Rover.steer) <= 11) and (Rover.brake == 0) and (not Rover.picking_up)) or ((len(Rover.samples_angles) > 0) and (not Rover.picking_up) and (Rover.brake == 0)):
         
         obstacle_x_world, obstacle_y_world = pix_to_world(oxnp,oynp,Rover.pos[0],Rover.pos[1],Rover.yaw,worldmap.shape[0],2*dst_s)
