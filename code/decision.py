@@ -15,7 +15,7 @@ def decision_step(Rover):
         Rover.stuck_time = Rover.total_time
 
     
-    if ((len(Rover.samples_angles) >= 2) or (len(Rover.samples_angles2) >= 13)) and (not Rover.stuck) and Rover.mode != 'found' and Rover.mode != 'lockedin' and Rover.mode != 'pick' and Rover.mode != 'pickup' and Rover.mode != 'stop':
+    if ((len(Rover.samples_angles) >= 1) or (len(Rover.samples_angles2) >= 13)) and (not Rover.stuck) and Rover.mode != 'found' and Rover.mode != 'lockedin' and Rover.mode != 'pick' and Rover.mode != 'pickup' and Rover.mode != 'stop':
         Rover.mode = 'found'
         print('FOUND')
         Rover.stuck_time = Rover.total_time
@@ -158,14 +158,14 @@ def decision_step(Rover):
             # If we're not moving (vel < 0.2) then do something else
             elif Rover.vel <= 0.2:
                 # Now we're stopped and we have vision data to see if there's a path forward
-                if (len(Rover.nav_angles) < Rover.go_forward) or (len(Rover.obst_angles2) != 0):
+                if (len(Rover.nav_angles) < Rover.go_forward) or (len(Rover.obst_angles2) >= 5):
                     Rover.throttle = 0
                     # Release the brake to allow turning
                     Rover.brake = 0
                     # Turn range is +/- 15 degrees, when stopped the next line will induce 4-wheel turning
                     Rover.steer = 15 # Could be more clever here about which way to turn
                 # If we're stopped but see sufficient navigable terrain in front then go!
-                if (len(Rover.nav_angles) >= Rover.go_forward) and (len(Rover.obst_angles2) == 0) and (not Rover.picking_up) and (not Rover.send_pickup):
+                if (len(Rover.nav_angles) >= Rover.go_forward) and (len(Rover.obst_angles2) < 5) and (not Rover.picking_up) and (not Rover.send_pickup):
                     # Set throttle back to stored value
                     Rover.throttle = Rover.throttle_set
                     # Release the brake

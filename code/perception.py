@@ -90,7 +90,7 @@ def obst_thresh(img, rgb_thresh=(100, 100, 100)):
     # Return the binary image
     return color_select
 
-def rock_thresh(img, rgb_thresh=(90, 90, 25)):
+def rock_thresh(img, rgb_thresh=(85, 85, 30)):
     # Create an array of zeros same xy size as img, but single channel
     # rocks will now contain a boolean array with "True"
     # where threshold was met
