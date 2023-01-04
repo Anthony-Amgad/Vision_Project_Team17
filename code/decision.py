@@ -17,7 +17,7 @@ def decision_step(Rover):
 
     #DECISION TREE
 
-    # Checking if any samples entered the vecinity mask for found
+    # Checking if any samples entered the vicinity masks for found
     if ((len(Rover.samples_angles) >= 1) or (len(Rover.samples_angles2) >= 13)) and (not Rover.stuck) and Rover.mode != 'found' and Rover.mode != 'lockedin' and Rover.mode != 'pick' and Rover.mode != 'pickup' and Rover.mode != 'stop':
         Rover.mode = 'found'
         print('FOUND')
