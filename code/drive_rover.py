@@ -79,6 +79,8 @@ class RoverState():
         self.send_pickup = False # Set to True to trigger rock pickup
         self.obst_angles = None
         self.obst_dists = None
+        self.obst_angles2 = None
+        self.obst_dists2 = None
         self.stuck_time = 0
         self.found_time = 0
         self.stuck = False

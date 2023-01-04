@@ -90,7 +90,7 @@ def obst_thresh(img, rgb_thresh=(100, 100, 100)):
     # Return the binary image
     return color_select
 
-def rock_thresh(img, rgb_thresh=(95, 95, 20)):
+def rock_thresh(img, rgb_thresh=(90, 90, 25)):
     # Create an array of zeros same xy size as img, but single channel
     # rocks will now contain a boolean array with "True"
     # where threshold was met
@@ -208,13 +208,13 @@ def perception_step(Rover):
     rxdp1 = rxp[rvisdistance<36]
     rydp1 = ryp[rvisdistance<36]
 
-    rocks[:,:150] = 0
     rxp, ryp = rover_coords(rocks)
-    rvisdistance = np.sqrt(rxp ** 2 + ryp ** 2)
-    rxdp2 = rxp[rvisdistance<80]
-    rydp2 = ryp[rvisdistance<80]
 
-    rxp, ryp = rover_coords(rocks)
+    rocks[:,:150] = 0
+    rxp2, ryp2 = rover_coords(rocks)
+    rvisdistance = np.sqrt(rxp2 ** 2 + ryp2 ** 2)
+    rxdp2 = rxp2[rvisdistance<80]
+    rydp2 = ryp2[rvisdistance<80]
 
     rdist2, rangles2 = to_polar_coords(rxdp2,rydp2)
     rdist1, rangles1 = to_polar_coords(rxdp1,rydp1)
@@ -229,13 +229,18 @@ def perception_step(Rover):
     visdistance = np.sqrt(oxp ** 2 + oyp ** 2)
     oxdp = oxp[visdistance<37]
     oydp = oyp[visdistance<37]
+    oxdp2 = oxp[visdistance<12]
+    oydp2 = oyp[visdistance<12]
     odist, oangles = to_polar_coords(oxdp,oydp)
+    odist2, oangles2 = to_polar_coords(oxdp2,oydp2)
     Rover.obst_angles = oangles
     Rover.obst_dists = odist
+    Rover.obst_angles2 = oangles2
+    Rover.obst_dists2 = odist2
     # 9) Debugging Mode
     ######## SET TO TRUE IF YOU WANT DEBUGGING MODE ACTIVE
 
-    dbugmode = True
+    dbugmode = False
 
     if dbugmode:
         arrow_length = 100
