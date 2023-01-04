@@ -28,7 +28,7 @@ def decision_step(Rover):
         Rover.send_pickup = False
         Rover.brake = 5
         Rover.throttle = 0
-        if Rover.vel == 0 and (Rover.pitch < 0.5 or Rover.pitch > 359.5) and (Rover.roll < 0.5 or Rover.roll > 359.5):
+        if Rover.vel == 0 and (Rover.pitch < 1.5 or Rover.pitch > 358.5) and (Rover.roll < 1.5 or Rover.roll > 358.5):
             Rover.found_time = Rover.total_time
             Rover.mode = 'lockedin'
     
